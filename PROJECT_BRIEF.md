@@ -34,19 +34,24 @@ Agent ที่ช่วยนักศึกษาหาอีเวนต์�
 
 ---
 
-## 3. Tech stack (ค่าเริ่มต้น เปลี่ยนได้)
+## 3. Tech stack (อัปเดต 23 Nov: เปลี่ยนเป็น Web app + PWA)
 
 | ส่วน | เครื่องมือ | เหตุผล |
 |---|---|---|
-| ภาษา | Python 3.11+ | อ่านง่าย library ครบ |
+| Frontend | **Next.js (React) + TypeScript + Tailwind CSS + shadcn/ui** | สวยแบบมืออาชีพได้เร็ว มี component สำเร็จรูป (card, dialog, form) และเป็นที่นิยมที่สุด หาตัวอย่างง่าย |
+| แอปบนมือถือ | **PWA** (manifest + service worker) | กด "ติดตั้ง" ลงหน้าจอมือถือได้เหมือนแอป ไม่ต้องผ่าน App Store ฟรี |
+| Backend / pipeline | **Python 3.11+ + FastAPI** | ใช้โค้ด Phase 1 ต่อได้เลย FastAPI ใช้ Pydantic ตัวเดียวกัน และสร้างหน้า API docs ให้อัตโนมัติ |
 | LLM | Claude API, model `claude-haiku-5-5` + structured output (JSON) | ถูกและเร็ว เหมาะกับงานแกะข้อมูล |
 | ดึงเว็บ | `requests` + `BeautifulSoup` (ถ้าเว็บใช้ JS ค่อยเพิ่ม `Playwright`) | เริ่มจากง่ายสุด |
+| Database + Login | **Supabase** (Postgres + Auth แบบ Google login) | free tier พอ, login ด้วย Google ได้ทันที (ตอนพัฒนาบนเครื่องใช้ SQLite ได้) |
 | อีเมล | Gmail API scope `gmail.readonly` (โหมด Testing ไม่เกิน 100 test users) | อ่านอย่างเดียว ปลอดภัย |
 | ปฏิทิน | Google Calendar API | ใส่อีเวนต์ให้อัตโนมัติ |
-| Database | SQLite | ไม่ต้องตั้ง server |
-| แจ้งเตือน | Telegram bot (`python-telegram-bot`) | ฟรี มีปุ่มกดได้ |
-| รันอัตโนมัติ | GitHub Actions (cron) หรือ cron บนเครื่อง | ฟรี |
-| Config | `.env` + `python-dotenv` | เก็บ key แยกจากโค้ด |
+| แจ้งเตือน | **Telegram bot + LINE Messaging API** (user เลือกได้ หรือใช้ทั้งคู่) | Telegram ฟรีไม่จำกัด / LINE คนไทยใช้เยอะ แต่ free plan จำกัดจำนวน push ต่อเดือน (เช็กตัวเลขตอนสมัคร) จึงใช้ LINE ส่งเฉพาะ digest + deadline ใกล้ (หมายเหตุ: LINE Notify ปิดไปแล้ว ต้องใช้ Messaging API) |
+| Hosting | Vercel (frontend), Render (backend), Supabase (DB) | free tier ทั้งหมด (Render free จะหลับเมื่อไม่มีคนใช้ ตื่นช้า ~30-60 วิ) |
+| รันอัตโนมัติ | GitHub Actions (cron) | ฟรี ใช้รัน pipeline ทุกวัน + digest วันอาทิตย์ |
+| Config | `.env` + `python-dotenv` / `.env.local` (Next.js) | เก็บ key แยกจากโค้ด |
+
+**ประมาณค่าใช้จ่าย (20 users):** hosting 0 บาท, Claude API หลักสิบบาท/เดือน, LINE ฟรีถ้าไม่เกินโควตา
 
 ---
 
@@ -54,31 +59,46 @@ Agent ที่ช่วยนักศึกษาหาอีเวนต์�
 
 ```
 [เว็บที่ user เพิ่ม] ─┐
-                    ├─> Source text ─> LLM extract (JSON) ─> Dedupe ─> Eligibility check ─> Rank ─> DB
-[อีเมล (Gmail)] ─────┘                                                                            │
-                                                                     Telegram (ทันที + Weekly digest) <┘
-                                                                     User กด สนใจ/ข้าม/ใส่ปฏิทิน ─> feedback ─> ใช้ rank ครั้งถัดไป
+                    ├─> Source text ─> LLM extract (JSON) ─> Dedupe ─> Eligibility check ─> Rank ─> DB (Supabase)
+[อีเมล (Gmail)] ─────┘                                                                                │
+                                                     ┌──────────────────────────────────────────────┤
+                                                     ▼                                              ▼
+                                       Web app / PWA (Next.js)                         Telegram / LINE
+                                       feed, profile, URLs, สถิติ                       (ทันที + Weekly digest)
+                                                     │                                              │
+                                                     └── User กด สนใจ/ข้าม/ใส่ปฏิทิน ─> feedback ─> ใช้ rank ครั้งถัดไป
 ```
 
-**หลักสำคัญ:** แยกส่วน "ดึงข้อมูล" (sources) ออกจาก "ประมวลผล" (pipeline) ทุก source ต้องคืนค่าเป็นรูปแบบเดียวกัน (`RawDocument`) เพื่อให้ภายหลังเพิ่ม source ใหม่ (RSS, รูปโปสเตอร์) ได้ง่าย
+**หลักสำคัญ:**
+- แยกส่วน "ดึงข้อมูล" (sources) ออกจาก "ประมวลผล" (pipeline) ทุก source ต้องคืนค่าเป็น `RawDocument` เพื่อเพิ่ม source ใหม่ได้ง่าย
+- แจ้งเตือนก็เหมือนกัน: ทุกช่องทางต้อง implement interface เดียวกัน (`send(user, message)`) เพื่อเพิ่มช่องทางใหม่ได้ง่าย
+- Frontend คุยกับ backend ผ่าน REST API เท่านั้น ไม่แตะ DB ตรง
 
-### โครงสร้างโฟลเดอร์ที่แนะนำ
+### หน้าเว็บหลัก
+1. **Landing + Login** (Google) พร้อม privacy notice / consent
+2. **Onboarding / Profile**: ปีเกิด, ระดับการศึกษา, สาขา, สัญชาติ, งบค่าสมัคร, ความสนใจ
+3. **Feed อีเวนต์**: card แสดง deadline, สถานะ eligible/unsure, เหตุผล, confidence, ปุ่ม สนใจ/ข้าม/ใส่ปฏิทิน, ลิงก์ต้นฉบับ
+4. **เว็บที่ติดตาม**: เพิ่ม/ลบ URL, ดูว่าดึงล่าสุดเมื่อไหร่
+5. **Settings**: เชื่อม Telegram / LINE, เชื่อม Gmail, ลบบัญชี
+6. **สถิติ** (ของ user + ภาพรวมระบบ): จำนวนอีเวนต์ที่เจอ/ถูกกรอง, เวลาที่ประหยัด (ใช้ตอนพรีเซนต์)
+
+### โครงสร้างโฟลเดอร์ (ย้าย `src/` เข้า `backend/` ตอนเริ่ม Phase 2)
 ```
-event-scout/
-├── src/
-│   ├── sources/        # web.py, gmail.py  -> คืนค่า RawDocument
-│   ├── extract.py      # เรียก Claude แกะเป็น Event
-│   ├── eligibility.py  # เทียบเงื่อนไขกับ profile (โค้ดล้วน ไม่ใช้ LLM)
-│   ├── rank.py
-│   ├── dedupe.py
-│   ├── db.py
-│   ├── notify/         # telegram_bot.py, digest.py
-│   ├── calendar.py
-│   └── models.py       # Pydantic models
-├── tests/
-├── data/               # sample HTML/อีเมล สำหรับทดสอบ
-├── metrics/            # สคริปต์วัดผล
-├── .env.example
+Agent_event/
+├── backend/
+│   ├── src/
+│   │   ├── sources/        # web.py, gmail.py  -> RawDocument
+│   │   ├── extract.py      # เรียก Claude แกะเป็น Event
+│   │   ├── eligibility.py  # เทียบเงื่อนไขกับ profile (โค้ดล้วน ไม่ใช้ LLM)
+│   │   ├── rank.py, dedupe.py, db.py, calendar.py
+│   │   ├── notify/         # base.py, telegram.py, line.py, digest.py
+│   │   ├── api/            # FastAPI routes
+│   │   └── models.py
+│   ├── tests/
+│   └── data/
+├── frontend/               # Next.js + Tailwind + shadcn/ui (PWA)
+├── metrics/
+├── .github/workflows/      # cron
 └── README.md
 ```
 
@@ -110,7 +130,8 @@ event-scout/
 **กฎ:** ถ้าไม่เจอข้อมูลในข้อความ ให้เป็น `null` **ห้ามเดา**
 
 ### UserProfile
-- `birth_year`, `university`, `level`, `year_of_study`, `major`, `nationality`, `max_fee`, `interests` (list), `telegram_chat_id`
+- `birth_year`, `university`, `level`, `year_of_study`, `major`, `nationality`, `max_fee`, `interests` (list)
+- ช่องทางแจ้งเตือนเก็บแยกในตาราง `notification_channels` (`telegram_chat_id`, `line_user_id`)
 
 ### Eligibility result
 - `status`: `"eligible"` | `"not_eligible"` | `"unsure"`
@@ -119,48 +140,49 @@ event-scout/
 
 ---
 
-## 6. แผนงาน (Phases)
+## 6. แผนงาน (Phases) — อัปเดต 23 Nov
 
-### Phase 1: Web → Extract MVP (23–29 Nov)
-- ตั้ง project, `.env.example`, `models.py`
-- `sources/web.py`: รับ URL → โหลด → แปลงเป็น text
-- `extract.py`: ส่ง text ให้ Claude → ได้ list ของ `Event`
-- CLI: `python -m src.main --url <URL>` แล้ว print ผลออกมา
-- ✅ เสร็จเมื่อ: ใส่ URL หน้าอีเวนต์จริง 3 เว็บแล้วแกะได้ถูก
+### Phase 1: Web → Extract MVP ✅ โค้ดเสร็จ (เหลือทดสอบกับเว็บจริง 3 เว็บเมื่อมี API key)
+- `models.py`, `sources/web.py`, `extract.py`, CLI `python -m src.main --url <URL>`
 
-### Phase 2: Database + Change detection + Eligibility (30 Nov–6 Dec)
-- SQLite: ตาราง `users`, `watched_urls`, `events`, `feedback`
+### Phase 2: Backend + Database + Eligibility (24–30 Nov)
+- ย้ายโค้ดเข้า `backend/`, ตั้ง FastAPI
+- DB: ตาราง `users`, `watched_urls`, `events`, `user_events` (สถานะ/feedback), `notification_channels`
 - เก็บ hash ของ text ถ้าไม่เปลี่ยนให้ข้าม ไม่เรียก LLM
 - `eligibility.py` พร้อม unit tests (ทดสอบทั้ง 3 status)
-- ✅ เสร็จเมื่อ: รันซ้ำแล้วไม่เรียก LLM กับหน้าที่ไม่เปลี่ยน และ tests ผ่าน
+- API: profile, watched URLs, events feed, feedback
+- ✅ เสร็จเมื่อ: เรียก API ผ่านหน้า `/docs` ได้ครบ, รันซ้ำไม่เรียก LLM กับหน้าที่ไม่เปลี่ยน, tests ผ่าน
 
-### Phase 3: Gmail source + Dedupe (7–13 Dec)
-- OAuth แบบ `gmail.readonly` โหมด Testing
-- ดึงเฉพาะอีเมลที่ผ่าน query กรอง เช่น `newer_than:1d (สมัคร OR register OR deadline OR hackathon OR workshop)`
-- **ไม่เก็บเนื้อหาอีเมลทั้งฉบับ** เก็บแค่ Event ที่แกะได้
-- `dedupe.py`: รวมอีเวนต์ซ้ำจากหลายแหล่ง (เทียบชื่อ + วันจัด)
-- ✅ เสร็จเมื่อ: อีเวนต์เดียวกันที่มาจากเว็บและอีเมลแสดงแค่ครั้งเดียว
+### Phase 3: Frontend + Login + PWA (1–7 Dec)
+- Next.js + Tailwind + shadcn/ui, ออกแบบ UI ให้สวยและใช้บนมือถือได้ดี
+- Google login (Supabase Auth) + consent, หน้า Profile, หน้าเว็บที่ติดตาม, หน้า Feed
+- PWA manifest ให้ติดตั้งบนมือถือได้
+- ✅ เสร็จเมื่อ: สมัคร → กรอก profile → เพิ่ม URL → เห็นอีเวนต์ใน feed ได้บนมือถือ
 
-### Phase 4: Telegram bot + Calendar + Weekly digest (14–20 Dec)
-- คำสั่ง: `/start` (สมัคร + กรอก profile), `/addurl`, `/listurls`, `/removeurl`, `/profile`, `/deleteme`
-- ส่งอีเวนต์ใหม่พร้อมปุ่ม **สนใจ / ข้าม / ใส่ปฏิทิน**
-- กด "ใส่ปฏิทิน" → สร้าง event + reminder ก่อน deadline
+### Phase 4: Telegram + LINE + Weekly digest (8–14 Dec)
+- หน้า Settings: เชื่อมบัญชี Telegram / LINE (กดลิงก์ → bot ผูกกับ user)
+- แจ้งเตือนอีเวนต์ใหม่ (Telegram ทันที, LINE เฉพาะสำคัญ) พร้อมปุ่ม สนใจ/ข้าม
 - Weekly digest วันอาทิตย์: 🔥 deadline ใกล้ / ⭐ แนะนำ / 📋 อื่น ๆ ที่สมัครได้
-- ✅ เสร็จเมื่อ: ใช้งานครบ flow ผ่าน Telegram ได้
+- GitHub Actions รัน pipeline ทุกวัน
+- ✅ เสร็จเมื่อ: ได้รับแจ้งเตือนทั้งสองช่องทาง และกดปุ่มแล้วสถานะในเว็บเปลี่ยนตาม
 
-### Phase 5: Personalization + ทดสอบกับ user จริง (21–27 Dec)
-- `rank.py`: ใช้ interests + feedback (สนใจ/ข้าม) ให้คะแนน และให้ LLM เขียนเหตุผลสั้น ๆ ว่าทำไมเหมาะ
-- ตั้ง GitHub Actions ให้รันทุกวัน
-- หา user นอกวงเพื่อนอย่างน้อย 10–20 คน มาทดลองใช้
+### Phase 5: Gmail + Calendar + Dedupe (15–21 Dec)
+- OAuth `gmail.readonly` โหมด Testing, ดึงเฉพาะอีเมลที่ผ่าน query กรอง, **ไม่เก็บเนื้อหาอีเมลดิบ**
+- `dedupe.py`: รวมอีเวนต์ซ้ำจากหลายแหล่ง (เทียบชื่อ + วันจัด)
+- ปุ่ม "ใส่ปฏิทิน" → Google Calendar + reminder ก่อน deadline
+- ✅ เสร็จเมื่อ: อีเวนต์เดียวกันจากเว็บและอีเมลแสดงครั้งเดียว และใส่ปฏิทินได้
+
+### Phase 6: Personalization + ทดสอบกับ user จริง (22–28 Dec)
+- `rank.py`: interests + feedback ให้คะแนน + LLM เขียนเหตุผลสั้น ๆ
+- หา user นอกวงเพื่อน 10–20 คน มาลองใช้ เก็บ log
 - ✅ เสร็จเมื่อ: มีคนใช้จริงและเก็บ log ได้
 
-### Phase 6: Metrics + Responsible AI + Polish (28 Dec–3 Jan)
-- สคริปต์วัดผล (ดูหัวข้อ 7)
-- Privacy notice / consent ตอน `/start` และ `/deleteme` ลบข้อมูลได้จริง
-- README + วิธีติดตั้ง
+### Phase 7: Metrics + Responsible AI + Polish (29 Dec–3 Jan)
+- สคริปต์วัดผล (หัวข้อ 7) + หน้าสถิติ
+- ลบบัญชีได้จริง, README + วิธีติดตั้ง
 - ⚠️ **สมัครแข่งภายใน 2 Jan**
 
-### Phase 7: Demo + Submit (4–9 Jan)
+### Phase 8: Demo + Submit (4–9 Jan)
 - วิดีโอ demo, สไลด์พรีเซนต์ 10 นาที
 - **ส่งงานภายใน 9 Jan**
 
@@ -183,6 +205,7 @@ event-scout/
 - **Gmail**: ใช้ `gmail.readonly` เท่านั้น, กรองก่อนส่ง LLM, ไม่เก็บเนื้อหาอีเมลดิบ, โหมด Testing (≤100 test users)
 - **Scraping อย่างมีมารยาท**: เช็ก `robots.txt`, ดึงไม่เกินวันละครั้งต่อ URL, ตั้ง User-Agent ที่บอกตัวตน, ไม่ login เข้าเว็บเพื่อดึงข้อมูล (ไม่รองรับ Facebook/IG ใน MVP), แกะแค่ข้อเท็จจริงแล้วลิงก์กลับต้นฉบับ
 - **AI อาจผิด**: แสดง confidence, ใช้สถานะ `unsure`, มีลิงก์ต้นฉบับให้ user เช็กเองเสมอ
+- **LINE / Telegram**: เก็บแค่ chat id / user id ที่จำเป็น, ลบออกเมื่อ user ยกเลิกการเชื่อม
 - **Security**: key อยู่ใน `.env`, ไม่ commit secrets, ป้องกัน SQL injection (ใช้ parameterized query)
 
 ---
