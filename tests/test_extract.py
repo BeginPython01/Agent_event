@@ -74,3 +74,19 @@ def test_refusal_raises():
     client = fake_client(None, stop_reason="refusal")
     with pytest.raises(ExtractError):
         extract_events(DOC, client=client)
+
+
+def test_past_events_are_dropped_by_code():
+    past = sample_event()
+    past.name = "Old event"
+    past.registration_deadline = date(2026, 10, 1)
+    no_dates = sample_event()
+    no_dates.name = "No dates"
+    no_dates.registration_deadline = None
+    client = fake_client(ExtractionResult(events=[sample_event(), past, no_dates]))
+
+    out = extract_events(DOC, client=client, today=date(2026, 11, 23))
+
+    names = [e.name for e in out.events]
+    assert names == ["MFU Hackathon 2027", "No dates"]  # unknown dates are kept, not dropped
+    assert out.skipped_past == 1

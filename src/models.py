@@ -92,6 +92,13 @@ class Event(BaseModel):
     register_url: str | None = Field(None, description="Absolute URL to the registration page")
     eligibility: Eligibility
     prizes_or_benefits: str | None = None
+    organizer: str | None = Field(None, description="Faculty, office, club or company running it")
+    is_campus: bool | None = Field(
+        None, description="True if organised by or held at the user's university"
+    )
+    activity_hours: float | None = Field(
+        None, description="Student activity hours (ชั่วโมงกิจกรรม) given, only if stated"
+    )
     source_ref: str | None = Field(None, description="Leave null; filled in by the program")
     confidence: FieldConfidence
 

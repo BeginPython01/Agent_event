@@ -1,8 +1,14 @@
 """Command line entry point.
 
 Usage:
+    # one page
     python -m src.main --url https://example.com/hackathon
-    python -m src.main --url https://example.com/hackathon --json
+
+    # a listing page: follow links that match a pattern, read each detail page
+    python -m src.main --url https://mfu.ac.th/news/news-seminar.html --follow news-detail --max 3
+
+    # raw JSON instead of a summary
+    python -m src.main --url ... --json
 """
 
 import argparse
@@ -15,7 +21,7 @@ from dotenv import load_dotenv
 
 from src.extract import ExtractError, extract_events
 from src.models import Event
-from src.sources.web import FetchError, fetch_url
+from src.sources.web import FetchError, fetch_listing, fetch_url
 
 # Haiku 5.5 price per 1M tokens (prompts up to 100K tokens). Used only for a rough estimate.
 PRICE_INPUT_PER_M = 0.10
@@ -30,7 +36,8 @@ def format_event(i: int, e: Event) -> str:
     if e.is_online:
         where += " (online)"
     lines = [
-        f"[{i}] {e.name}  ({e.category})",
+        f"[{i}] {e.name}  ({e.category}{', campus' if e.is_campus else ''})",
+        f"    Organizer: {e.organizer or '?'}",
         f"    Deadline : {e.registration_deadline or '?'}   (confidence {c.registration_deadline:.2f})",
         f"    Dates    : {e.event_start or '?'} -> {e.event_end or '?'}   (confidence {c.event_dates:.2f})",
         f"    Where    : {where}",
@@ -40,6 +47,8 @@ def format_event(i: int, e: Event) -> str:
         f"majors {el.allowed_majors or 'any'}, nationality {el.nationality or 'any'}, "
         f"team {el.team_size_min or '-'}-{el.team_size_max or '-'}   (confidence {c.eligibility:.2f})",
     ]
+    if e.activity_hours is not None:
+        lines.append(f"    Hours    : {e.activity_hours} activity hours")
     if el.other_conditions:
         lines.append(f"    Other    : {el.other_conditions}")
     if e.prizes_or_benefits:
@@ -51,45 +60,58 @@ def format_event(i: int, e: Event) -> str:
 def main() -> int:
     load_dotenv()  # loads ANTHROPIC_API_KEY etc. from .env
 
-    parser = argparse.ArgumentParser(description="Extract events from a web page with Claude.")
-    parser.add_argument("--url", required=True, help="Page that lists one or more events")
+    parser = argparse.ArgumentParser(description="Extract events from web pages with Claude.")
+    parser.add_argument("--url", required=True, help="An event page, or a listing page with --follow")
+    parser.add_argument("--follow", metavar="PATTERN", help="Regex for detail links to follow, e.g. news-detail")
+    parser.add_argument("--max", type=int, default=5, help="Max detail pages to read with --follow (default 5)")
     parser.add_argument("--json", action="store_true", help="Print raw JSON instead of a summary")
     args = parser.parse_args()
 
-    # Fail fast with a clear message, before we spend time fetching the page.
+    # Fail fast with a clear message, before we spend time fetching pages.
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.", file=sys.stderr)
         return 1
 
     try:
-        doc = fetch_url(args.url)
-        print(f"Fetched '{doc.title}' ({len(doc.text):,} chars, {len(doc.links)} links)", file=sys.stderr)
-        result = extract_events(doc)
+        docs = fetch_listing(args.url, args.follow, args.max) if args.follow else [fetch_url(args.url)]
     except FetchError as e:
         print(f"Fetch error: {e}", file=sys.stderr)
         return 1
-    except ExtractError as e:
-        print(f"Extract error: {e}", file=sys.stderr)
-        return 1
-    except anthropic.AuthenticationError:
-        print("Claude API key is missing or invalid. Check ANTHROPIC_API_KEY in .env", file=sys.stderr)
-        return 1
-    except anthropic.APIError as e:
-        print(f"Claude API error: {e}", file=sys.stderr)
-        return 1
+
+    client = anthropic.Anthropic()  # one client, reused for every page
+    events: list[Event] = []
+    input_tokens = output_tokens = skipped_past = 0
+    for doc in docs:
+        print(f"Reading '{doc.title}' ({len(doc.text):,} chars)", file=sys.stderr)
+        try:
+            result = extract_events(doc, client=client)
+        except ExtractError as e:
+            print(f"  Extract error: {e}", file=sys.stderr)
+            continue
+        except anthropic.AuthenticationError:
+            print("Claude API key is missing or invalid. Check ANTHROPIC_API_KEY in .env", file=sys.stderr)
+            return 1
+        except anthropic.APIError as e:
+            print(f"  Claude API error: {e}", file=sys.stderr)
+            continue
+        events.extend(result.events)
+        input_tokens += result.input_tokens
+        output_tokens += result.output_tokens
+        skipped_past += result.skipped_past
 
     if args.json:
-        print(json.dumps([e.model_dump(mode="json") for e in result.events], indent=2, ensure_ascii=False))
+        print(json.dumps([e.model_dump(mode="json") for e in events], indent=2, ensure_ascii=False))
     else:
-        if not result.events:
-            print("No events found on this page.")
-        for i, event in enumerate(result.events, start=1):
+        if not events:
+            print("No upcoming events found.")
+        for i, event in enumerate(events, start=1):
             print(format_event(i, event))
             print()
 
-    cost = result.input_tokens / 1e6 * PRICE_INPUT_PER_M + result.output_tokens / 1e6 * PRICE_OUTPUT_PER_M
+    cost = input_tokens / 1e6 * PRICE_INPUT_PER_M + output_tokens / 1e6 * PRICE_OUTPUT_PER_M
     print(
-        f"Tokens: {result.input_tokens:,} in / {result.output_tokens:,} out  (~${cost:.5f})",
+        f"Pages: {len(docs)} · events: {len(events)} · skipped (already past): {skipped_past}\n"
+        f"Tokens: {input_tokens:,} in / {output_tokens:,} out  (~${cost:.5f})",
         file=sys.stderr,
     )
     return 0

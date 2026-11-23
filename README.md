@@ -1,6 +1,6 @@
-# Event Scout Agent
+# Scout — Campus Event Agent
 
-Agent that finds upcoming student events (hackathons, workshops, camps, competitions) from web pages and email, checks whether you're eligible, and sends you the ones worth applying to. See `PROJECT_BRIEF.md` for the full plan.
+AI agent that follows university activities and emails about events you signed up for, keeps your calendar up to date, and tells you what needs your decision. See `PROJECT_BRIEF.md` for the full plan.
 
 **Status:** Phase 1 (web page → extract events with Claude)
 
