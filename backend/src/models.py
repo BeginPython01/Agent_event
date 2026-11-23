@@ -122,7 +122,7 @@ class UserProfile(BaseModel):
     nationality: str | None = None
     max_fee: float | None = None
     interests: list[str] = []
-    telegram_chat_id: int | None = None
+    # Telegram/LINE ids live in the notification_channels table (brief section 5).
 
 
 class EligibilityResult(BaseModel):
