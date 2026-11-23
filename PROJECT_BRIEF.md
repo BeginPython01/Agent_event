@@ -164,15 +164,15 @@ Agent_event/
 
 ## 6. แผนงาน (Phases)
 
-### Phase 1: Web → Extract MVP (เหลือถึง 26 Nov)
+### Phase 1: Web → Extract MVP — โค้ดเสร็จ ⏳ รอเทสกับ Claude จริง
 - ✅ `models.py`, `sources/web.py`, `extract.py`, CLI
-- เพิ่ม: ตามลิงก์จากหน้ารวมข่าวเข้าไปอ่านหน้าข่าว (จำกัดจำนวนต่อรอบ)
-- แก้: ถ้า `robots.txt` redirect ไปหน้า HTML (เว็บมอเป็นแบบนี้) ให้ถือว่าไม่มีกฎ แทนที่จะเอา HTML ไปอ่านเป็นกฎ
-- ✅ เสร็จเมื่อ: แกะกิจกรรมจากหน้าข่าวมอจริง 3 หน้าได้ถูก (ต้องมี API key)
+- ✅ ตามลิงก์จากหน้ารวมข่าวเข้าไปอ่านหน้าข่าว (`--follow news-detail --max N`), อ่านเฉพาะ `<main>`
+- ✅ แก้ `robots.txt` ที่ redirect ไปหน้า HTML ให้ถือว่าไม่มีกฎ
+- ⏳ เสร็จเมื่อ: แกะกิจกรรมจากหน้าข่าวมอจริง 3 หน้าได้ถูก (ต้องมี API key)
 
-### Phase 2: Backend + Database + Eligibility + Agent log (27 Nov–3 Dec)
+### Phase 2: Backend + Database + Eligibility + Agent log ✅ (เสร็จ 23 Nov)
 - ย้ายโค้ดเข้า `backend/`, ตั้ง FastAPI
-- ตาราง: `users`, `watched_urls`, `events`, `applications`, `agent_actions`, `notification_channels`
+- ตาราง: `users`, `watched_urls`, `source_documents`, `events`, `applications`, `agent_actions`, `notification_channels`
 - เก็บ hash ของหน้าเว็บ ถ้าไม่เปลี่ยนให้ข้าม (และลง log ว่าข้าม)
 - `eligibility.py` + unit tests ครบ 3 status
 - ✅ เสร็จเมื่อ: เรียก API ผ่าน `/docs` ได้, รันซ้ำไม่เรียก LLM กับหน้าที่ไม่เปลี่ยน, tests ผ่าน
@@ -254,4 +254,8 @@ Agent_event/
 - 23 Nov: เปลี่ยนจาก CLI → Web app + PWA, แจ้งเตือนทั้ง Telegram และ LINE
 - 23 Nov: ธีม dark glass (gradient, ไม่ใช้รูปพื้นหลัง)
 - 23 Nov: เปลี่ยนเป็น **Agent-first** ชื่อ Scout: หน้าแรกเป็นรายงานตัว, เรื่องเล็กทำเองได้ (undo ได้), โฟกัสกิจกรรมมหาลัย + อีเมลงานที่สมัคร
+- 23 Nov (Phase 2): ใช้ SQLAlchemy (ไม่เขียน SQL เอง) เพื่อย้ายไป Postgres/Supabase ได้แค่เปลี่ยน `DATABASE_URL`
+- 23 Nov (Phase 2): หน้าเว็บที่อ่านแล้ว (`source_documents`) ใช้ร่วมกันทุก user — 20 คนดูเว็บมอหน้าเดียวกัน = เรียก LLM ครั้งเดียว
+- 23 Nov (Phase 2): eligibility คำนวณตอนขอ feed ทุกครั้ง ไม่เก็บลง DB (เร็ว และถูกต้องทันทีเมื่อ user แก้ profile)
+- 23 Nov (Phase 2): ระบุตัว user ด้วย header `X-User-Id` ชั่วคราว **ใช้ตอน dev เท่านั้น** แทนที่ด้วย Google login ใน Phase 4
 - Mockup: https://claude.ai/artifact/NRamo6D86E7uwpbgL3171Q (หน้า v3 · Agent)

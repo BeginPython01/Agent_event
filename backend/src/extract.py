@@ -25,6 +25,7 @@ Rules:
 - registration_deadline is the last day to apply/register, not the event day. If only "register by event day" is implied, leave it null.
 - register_url must be an absolute URL taken from the text or the link list. Prefer an application form or sign-up page over a general homepage.
 - fee_amount: 0 only if the text says it is free; null if fees are not mentioned.
+- eligibility: put conditions into the structured fields whenever possible, so a program can compare them. For example "for professional nurses only" -> allowed_levels ["working"], allowed_majors ["Nursing"]; "นักศึกษาปริญญาตรีทุกชั้นปี" -> student_only true, allowed_levels ["undergraduate"]. Use other_conditions only for what doesn't fit.
 - is_campus: true when the organizer is a faculty, office or club of the university that published the page, or the event is held on its campus.
 - activity_hours: only when the text states student activity hours (ชั่วโมงกิจกรรม); otherwise null.
 - confidence: 1.0 when the value is stated clearly, around 0.5 when you had to interpret it (missing year, vague wording), 0.0 when the field is null."""
