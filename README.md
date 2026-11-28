@@ -39,6 +39,7 @@ Tests use a fake Claude client, a fake website and a temporary database: no inte
 PROJECT_BRIEF.md   plan, rules, decisions (read first)
 CLAUDE.md          instructions for Claude Code
 docs/prompts/      frontend prompt (Phase 4)
+docs/process-log.md  process log for the competition (≥5 entries + reflection)
 backend/
   src/
     models.py        Pydantic models

@@ -1,7 +1,7 @@
 # Project Brief: Scout — Campus Event Agent (YAI Singapore 2026/27, quest AI Agents)
 
 > วิธีใช้: เปิดไฟล์นี้ให้ AI อ่านก่อนเริ่มงานทุกครั้ง แล้วสั่งว่า "เริ่ม Phase X"
-> อัปเดตล่าสุด: 23 Nov 2026 (เปลี่ยนทิศทางเป็น Agent-first)
+> อัปเดตล่าสุด: 28 Nov 2026 (ปรับแผนให้ตรงกับตารางปิดเทอม: ส่งงาน 3 ม.ค.)
 
 ---
 
@@ -37,7 +37,35 @@
 - AI เป็นแกนหลัก + **ผลลัพธ์เป็นตัวเลข**
 - ใช้กับคนนอกวงเพื่อนได้จริง
 - คะแนน: Creativity 30%, Understanding 25%, Completeness 20%, Communication 20%, Responsible AI 5%
-- **สมัครภายใน 2 Jan 2027 / ส่งงานภายใน 9 Jan 2027**
+
+### วันสำคัญ (เวลาไทย)
+| วันที่ | อะไร |
+|---|---|
+| W1 (ภายใน 3 ธ.ค.) | สมัคร YAI + fee waiver + เลือก quest → ผู้ปกครองยืนยัน + จ่ายเงินภายใน 3 วัน (ปิดรับจริง 2 ม.ค. 22:59) |
+| 3 ธ.ค. | อ่านโจทย์ฉบับเต็มที่ปลดล็อกหลังสมัคร แล้วปรับแผน |
+| 18 ธ.ค. | ✅ MVP ครบ |
+| 19 ธ.ค. | โพสต์ teaser แนวตั้ง #YAISG |
+| 28–30 ธ.ค. | อัด + ตัดต่อคลิป demo |
+| **3 ม.ค.** | **เป้าหมายส่งงาน** (4 ม.ค. เปิดเทอม) |
+| 9 ม.ค. 22:59 | หมดเขตส่งงานจริง (แก้ได้ถึงตอนนี้ = เวลาสำรอง) |
+| 13 ม.ค. 08:00 | ประกาศ finalist ทางอีเมล |
+| 31 ม.ค. | Finals ออนไลน์: พรีเซนต์ภาษาอังกฤษ 10 นาที + Q&A (ถ้าเข้ารอบ) |
+
+### สิ่งที่ต้องส่ง (จากตารางปิดเทอม, เช็กอีกครั้งกับโจทย์ฉบับเต็ม)
+- คลิป demo แนวนอน 2–3 นาที (YouTube Unlisted) + คลิปโซเชียลแนวตั้ง
+- teaser แนวตั้ง ติด #YAISG + ลิงก์โพสต์
+- project intro
+- **process log ≥5 entries + reflection** (เก็บไว้ที่ `docs/process-log.md`)
+- หลักฐานความเป็นนักศึกษา
+
+### เวลาที่มี
+- Scout **วันละ 2 ชม.** (อีก 3 ชม./วันเป็น Python/AI security และ Roblox)
+- วันพัก: 6, 13, 20, 27 ธ.ค. และ 31 ธ.ค.–1 ม.ค.
+- รวมประมาณ **60 ชม.** จาก 28 พ.ย. ถึง 3 ม.ค. → ต้องตัดฟีเจอร์เสริมตามลำดับท้ายข้อ 6
+
+### ความเสี่ยงที่ต้องรู้คำตอบก่อน
+- ถามผู้จัด (support@ycess.com) ว่า Scout ที่ออกแบบก่อน 19 ต.ค. ใช้ได้ไหม ถ้าไม่ได้ แผนทั้งหมดต้องเปลี่ยน (git history ของ repo นี้เริ่ม 23 พ.ย.)
+- โจทย์ฉบับเต็ม (3 ธ.ค.) อาจเปลี่ยน scope
 
 ---
 
@@ -162,13 +190,13 @@ Agent_event/
 
 ---
 
-## 6. แผนงาน (Phases)
+## 6. แผนงาน (Phases) — ปรับ 28 Nov ให้ตรงกับตารางปิดเทอม
 
-### Phase 1: Web → Extract MVP — โค้ดเสร็จ ⏳ รอเทสกับ Claude จริง
+### Phase 1: Web → Extract MVP — โค้ดเสร็จ ⏳ รอเทสกับ Claude จริง (ภายใน 3 ธ.ค.)
 - ✅ `models.py`, `sources/web.py`, `extract.py`, CLI
 - ✅ ตามลิงก์จากหน้ารวมข่าวเข้าไปอ่านหน้าข่าว (`--follow news-detail --max N`), อ่านเฉพาะ `<main>`
 - ✅ แก้ `robots.txt` ที่ redirect ไปหน้า HTML ให้ถือว่าไม่มีกฎ
-- ⏳ เสร็จเมื่อ: แกะกิจกรรมจากหน้าข่าวมอจริง 3 หน้าได้ถูก (ต้องมี API key)
+- ⏳ เสร็จเมื่อ: แกะกิจกรรมจากหน้าข่าวมอจริง 3 หน้าได้ถูก (ต้องมี API key, รันที่เครื่องตัวเอง)
 
 ### Phase 2: Backend + Database + Eligibility + Agent log ✅ (เสร็จ 23 Nov)
 - ย้ายโค้ดเข้า `backend/`, ตั้ง FastAPI
@@ -177,8 +205,9 @@ Agent_event/
 - `eligibility.py` + unit tests ครบ 3 status
 - ✅ เสร็จเมื่อ: เรียก API ผ่าน `/docs` ได้, รันซ้ำไม่เรียก LLM กับหน้าที่ไม่เปลี่ยน, tests ผ่าน
 
-### Phase 3: Gmail + Calendar + Agent decisions (4–10 Dec)
-- OAuth `gmail.readonly` + `calendar.events` (โหมด Testing)
+### Phase 3: Gmail + Calendar + Agent decisions (4–12 Dec, พัก 6 ธ.ค.)
+- **ก่อนเริ่ม:** อ่านโจทย์ฉบับเต็ม (3 ธ.ค.) และสร้าง Google Cloud project + OAuth consent screen (โหมด Testing)
+- OAuth `gmail.readonly` + `calendar.events`
 - `email_triage.py`: จัดหมวดอีเมล + จับคู่กับงานที่สมัคร
 - `agent/decide.py`: ทำตามตาราง 4.1 (ร่างนัด, ย้ายนัด, ตั้งเตือน, หรือส่งเข้า "รอคุณตัดสินใจ")
 - undo ได้ทุก action ที่ทำเอง
@@ -186,33 +215,31 @@ Agent_event/
 - ⚠️ เช็กก่อนว่าอีเมลนักศึกษาของมอเชื่อมได้ไหม ถ้า admin บล็อก ให้ใช้ Gmail ส่วนตัวแทน
 - ✅ เสร็จเมื่อ: อีเมลยืนยันการสมัคร → นัดร่างในปฏิทิน, อีเมลแจ้งเลื่อน → นัดย้ายเอง และกด undo ได้
 
-### Phase 4: Frontend + Login + PWA (11–17 Dec)
+### Phase 4: Frontend + Login + PWA → MVP (14–18 Dec)
 - หน้า Scout (รายงานตัว, รอคุณตัดสินใจ, ปฏิทินสัปดาห์, ไทม์ไลน์), ค้นพบ, สมัครไว้
-- Google login + consent, PWA
-- ✅ เสร็จเมื่อ: ใช้ครบ flow บนมือถือได้ (login → profile → เห็นรายงานตัว → กดอนุมัติ/undo)
+- Google login + consent (แทน `X-User-Id`), PWA, deploy ขึ้น Vercel + Render
+- ✅ เสร็จเมื่อ (**18 ธ.ค. = MVP**): ใช้ครบ flow บนมือถือได้ (login → profile → เห็นรายงานตัว → กดอนุมัติ/undo)
+- 19 ธ.ค.: โพสต์ teaser #YAISG + **เริ่มชวนคนนอกวงเพื่อนมาลองใช้** (ต้องเริ่มตอนนี้ ไม่งั้นไม่มีตัวเลขไปใส่คลิป)
 
-### Phase 5: คำสั่งภาษาคน + แจ้งเตือน + cron (18–24 Dec)
-- `agent/commands.py`: Claude tool use เรียกเครื่องมือของเราเอง เช่น `search_events`, `list_applications`, `add_draft_to_calendar`, `move_reminder`, `explain_action`
-- Telegram (แจ้งเตือน + สั่งงานได้), LINE ถ้าทัน
-- เตือนล่วงหน้าเอง + สรุปรายสัปดาห์
+### Phase 5: แจ้งเตือน + คำสั่งภาษาคน + วัดผล + Responsible AI (21–26 Dec)
+- Telegram: แจ้งเตือน + เตือนก่อน deadline (LINE ตัดไว้ก่อน)
+- `agent/commands.py`: คำสั่งภาษาคนในแอป ด้วย Claude tool use (`search_events`, `list_applications`, `add_draft_to_calendar`, `move_reminder`, `explain_action`)
 - GitHub Actions รันวันละ 2 รอบ
-- ✅ เสร็จเมื่อ: พิมพ์สั่งในแอปหรือ Telegram แล้ว Scout ทำได้จริง และได้รับเตือนก่อน deadline
+- สคริปต์วัดผล (ข้อ 7) จาก test set + log ของ user จริง, หน้าสถิติ
+- ลองโจมตี Scout ตัวเอง (prompt injection ผ่านเว็บ/อีเมล) + เช็ก privacy และข้อจำกัด (26 ธ.ค.)
+- ✅ เสร็จเมื่อ: ได้รับเตือนจริง, สั่งงานด้วยภาษาคนได้, มีตัวเลขครบตามข้อ 7
 
-### Phase 6: Personalization + ทดสอบกับ user จริง (25–30 Dec)
-- `rank.py`: ใช้ความสนใจ + feedback จัดลำดับ
-- ร่างใบสมัคร (ถ้าทัน)
-- หา user นอกวงเพื่อน 10–20 คน
-- ✅ เสร็จเมื่อ: มีคนใช้จริงและเก็บ log ได้
+### Phase 6: คลิป + ส่งงาน (28 Dec–3 Jan, พัก 31 ธ.ค.–1 ม.ค.)
+- 28 ธ.ค. เขียนสคริปต์คลิป · 29 ธ.ค. อัด · 30 ธ.ค. ตัดต่อ + คลิปแนวตั้ง
+- 2 ม.ค. โพสต์คลิป #YAISG + project intro
+- 3 ม.ค. process log ≥5 entries + reflection + ส่งฟอร์ม
+- ✅ เสร็จเมื่อ: ส่งฟอร์มแล้ว (แก้ต่อได้ถึง 9 ม.ค. 22:59)
 
-### Phase 7: Metrics + Responsible AI + Polish (31 Dec–3 Jan)
-- สคริปต์วัดผล (ข้อ 7) + หน้าสถิติ, PDPA consent, ลบบัญชีได้จริง, README
-- ⚠️ **สมัครแข่งภายใน 2 Jan**
+### หลังเปิดเทอม
+- 13 ม.ค. เช็กอีเมล finalist
+- ถ้าเข้ารอบ: สไลด์ + ซ้อมพรีเซนต์ภาษาอังกฤษ 10 นาที + Q&A (31 ม.ค.)
 
-### Phase 8: Demo + Submit (4–9 Jan)
-- วิดีโอ demo, สไลด์ 10 นาที
-- **ส่งงานภายใน 9 Jan**
-
-**ถ้าเวลาไม่พอ ตัดตามลำดับนี้:** LINE → ร่างใบสมัคร → แหล่งงานเสริม (hackathon) → personalization
+**ถ้าเวลาไม่พอ ตัดตามลำดับนี้:** LINE → ร่างใบสมัคร → แหล่งงานเสริม (hackathon) → personalization (`rank.py`) → สั่งงานผ่าน Telegram (เก็บไว้แค่ในแอป)
 
 ---
 
@@ -258,4 +285,6 @@ Agent_event/
 - 23 Nov (Phase 2): หน้าเว็บที่อ่านแล้ว (`source_documents`) ใช้ร่วมกันทุก user — 20 คนดูเว็บมอหน้าเดียวกัน = เรียก LLM ครั้งเดียว
 - 23 Nov (Phase 2): eligibility คำนวณตอนขอ feed ทุกครั้ง ไม่เก็บลง DB (เร็ว และถูกต้องทันทีเมื่อ user แก้ profile)
 - 23 Nov (Phase 2): ระบุตัว user ด้วย header `X-User-Id` ชั่วคราว **ใช้ตอน dev เท่านั้น** แทนที่ด้วย Google login ใน Phase 4
+- 28 Nov: ปรับแผนให้ตรงกับตารางปิดเทอม (Scout วันละ 2 ชม.): MVP 18 ธ.ค., คลิป 28–30 ธ.ค., **ส่งงาน 3 ม.ค.** (เดิม 9 ม.ค.), รวม Phase 5–7 เดิมเป็น Phase 5 ใหม่, personalization ย้ายไปอยู่ในรายการตัด, สไลด์ย้ายไปหลังประกาศ finalist
+- 28 Nov: เริ่ม `docs/process-log.md` สำหรับ process log ที่ผู้จัดกำหนด
 - Mockup: https://claude.ai/artifact/NRamo6D86E7uwpbgL3171Q (หน้า v3 · Agent)
